@@ -41,7 +41,11 @@ class App(arcade.Window):
         self.add_pigs()
         self.bird_type = "red"
 
-        self.start_point = Point2D()
+        slingshot = arcade.Sprite("assets/img/sling-3.png",1)
+        slingshot.position = (200,50)
+        self.sprites.append(slingshot)
+
+        self.start_point = Point2D(160,120)
         self.end_point = Point2D()
         self.distance = 0
         self.draw_line = False
@@ -91,7 +95,7 @@ class App(arcade.Window):
     def on_mouse_press(self, x, y, button, modifiers):
         if not self.isBirdFlying() and button == arcade.MOUSE_BUTTON_LEFT:
             self.creatingBrid = True
-            self.start_point = Point2D(x, y)
+            # self.start_point = Point2D(x, y)
             self.end_point = Point2D(x, y)
             self.draw_line = True
             logger.debug(f"Start Point: {self.start_point}")
