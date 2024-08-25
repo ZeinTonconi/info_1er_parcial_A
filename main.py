@@ -1,9 +1,10 @@
 import math
 import logging
 import arcade
+import arcade.key
 import pymunk
 
-from game_object import Bird, Column, Pig
+from game_object import Bird, Column, Pig, BlueBird
 from game_logic import get_impulse_vector, Point2D, get_distance
 
 logging.basicConfig(level=logging.DEBUG)
@@ -97,7 +98,7 @@ class App(arcade.Window):
             logger.debug(f"Releasing from: {self.end_point}")
             self.draw_line = False
             impulse_vector = get_impulse_vector(self.start_point, self.end_point)
-            bird = Bird("assets/img/red-bird3.png", impulse_vector, x, y, self.space)
+            bird = BlueBird( impulse_vector, x, y, self.space)
             self.sprites.append(bird)
             self.birds.append(bird)
 
@@ -109,6 +110,9 @@ class App(arcade.Window):
             arcade.draw_line(self.start_point.x, self.start_point.y, self.end_point.x, self.end_point.y,
                              arcade.color.BLACK, 3)
 
+    def on_key_release(self, symbol: int, modifiers: int):
+        if symbol == arcade.key.SPACE:
+            self.birds[0].power(self.sprites, self.birds, self.space)
 
 def main():
     app = App()

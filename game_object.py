@@ -23,8 +23,9 @@ class Bird(arcade.Sprite):
         elasticity: float = 0.8,
         friction: float = 1,
         collision_layer: int = 0,
+        scale: int = 1
     ):
-        super().__init__(image_path, 1)
+        super().__init__(image_path, scale)
         # body
         moment = pymunk.moment_for_circle(mass, 0, radius)
         body = pymunk.Body(mass, moment)
@@ -32,8 +33,10 @@ class Bird(arcade.Sprite):
 
         impulse = min(max_impulse, impulse_vector.impulse) * power_multiplier
         impulse_pymunk = impulse * pymunk.Vec2d(1, 0)
+
+        self.speedVector = impulse_pymunk.rotated(impulse_vector.angle)
         # apply impulse
-        body.apply_impulse_at_local_point(impulse_pymunk.rotated(impulse_vector.angle))
+        body.apply_impulse_at_local_point(self.speedVector)
         # shape
         shape = pymunk.Circle(body, radius)
         shape.elasticity = elasticity
@@ -52,6 +55,31 @@ class Bird(arcade.Sprite):
         self.center_x = self.shape.body.position.x
         self.center_y = self.shape.body.position.y
         self.radians = self.shape.body.angle
+
+class BlueBird(Bird):
+    def __init__(
+        self,
+        impulse_vector: ImpulseVector,
+        x: float,
+        y: float,
+        space: pymunk.Space
+     ):
+         super().__init__( "assets/img/blue.png", impulse_vector, x, y, space, scale = 0.2)
+
+    def power(self, sprites, birds, space):
+
+        speed = self.body.velocity.length
+        angle = self.body.velocity.angle
+
+        newVector = ImpulseVector(angle+math.pi/6, speed)
+        bird = BlueBird( newVector, self.center_x, self.center_y, space)
+        sprites.append(bird)
+        birds.append(bird)
+         
+        newVector = ImpulseVector(angle-math.pi/6, speed)
+        bird = BlueBird( newVector, self.center_x, self.center_y, space)
+        sprites.append(bird)
+        birds.append(bird)
 
 
 class Pig(arcade.Sprite):
