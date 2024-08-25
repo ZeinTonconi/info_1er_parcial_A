@@ -14,8 +14,8 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 
 logger = logging.getLogger("main")
 
-WIDTH = 1800
-HEIGHT = 800
+WIDTH = 1700
+HEIGHT = 700
 TITLE = "Angry birds"
 GRAVITY = -900
 
@@ -28,6 +28,9 @@ class App(arcade.Window):
         self.space = pymunk.Space()
         self.space.gravity = (0, GRAVITY)
 
+        # contar la cantidad de objetos en la pantalla
+        self.obstacles_counter = 0
+
         # agregar piso
         floor_body = pymunk.Body(body_type=pymunk.Body.STATIC)
         floor_shape = pymunk.Segment(floor_body, [0, 15], [WIDTH, 15], 0.0)
@@ -37,15 +40,15 @@ class App(arcade.Window):
         self.sprites = arcade.SpriteList()
         self.birds = arcade.SpriteList()
         self.world = arcade.SpriteList()
-        self.add_columns()
+        self.add_columns(400)
         self.add_pigs()
         self.bird_type = "red"
 
-        slingshot = arcade.Sprite("assets/img/sling-3.png",1)
-        slingshot.position = (200,50)
+        slingshot = arcade.Sprite("assets/img/sling-3.png", 1)
+        slingshot.position = (200, 50)
         self.sprites.append(slingshot)
 
-        self.start_point = Point2D(160,120)
+        self.start_point = Point2D(160, 120)
         self.end_point = Point2D()
         self.distance = 0
         self.draw_line = False
@@ -64,17 +67,22 @@ class App(arcade.Window):
                 if obj.shape in arbiter.shapes:
                     obj.remove_from_sprite_lists()
                     self.space.remove(obj.shape, obj.body)
-
+                    self.obstacles_counter = self.obstacles_counter - 1
+                    logger.debug(f"Hay {self.obstacles_counter} obstáculos en la pantalla")
         return True
 
-    def add_columns(self):
-        for x in range(WIDTH // 2, WIDTH, 400):
+    def add_columns(self, separation):
+        for x in range(WIDTH // 2, WIDTH - 300, separation):
             column = Column(x, 50, self.space)
             self.sprites.append(column)
             self.world.append(column)
+            self.obstacles_counter = self.obstacles_counter + 1
+            logger.debug(f"Hay {self.obstacles_counter} obstáculos en la pantalla")
 
     def add_pigs(self):
         pig1 = Pig(WIDTH / 2, 100, self.space)
+        self.obstacles_counter = self.obstacles_counter+1
+        logger.debug(f"Hay {self.obstacles_counter} obstáculos en la pantalla")
         self.sprites.append(pig1)
         self.world.append(pig1)
 
@@ -82,9 +90,6 @@ class App(arcade.Window):
         self.space.step(1 / 60.0)  # actualiza la simulacion de las fisicas
         self.update_collisions()
         self.sprites.update()
-
-    def update_collisions(self):
-        pass
 
     def isBirdFlying(self):
         for bird in self.birds:
@@ -95,14 +100,13 @@ class App(arcade.Window):
     def on_mouse_press(self, x, y, button, modifiers):
         if not self.isBirdFlying() and button == arcade.MOUSE_BUTTON_LEFT:
             self.creatingBrid = True
-            # self.start_point = Point2D(x, y)
             self.end_point = Point2D(x, y)
             self.draw_line = True
             logger.debug(f"Start Point: {self.start_point}")
         elif button == arcade.MOUSE_BUTTON_LEFT:
             for bird in self.birds:
                 if bird.isFlying():
-                    bird.power(self.sprites, self.birds, self.space) 
+                    bird.power(self.sprites, self.birds, self.space)
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
         if self.creatingBrid and buttons == arcade.MOUSE_BUTTON_LEFT:
@@ -132,7 +136,10 @@ class App(arcade.Window):
         elif symbol == arcade.key.KEY_2:
             self.bird_type = "yellow"
         elif symbol == arcade.key.KEY_3:
-            self.bird_type = "blue"  
+            self.bird_type = "blue"
+        # pasa al siguiente nivel si ya no hay obstáculos presionando la flecha derecha
+        elif symbol == arcade.key.RIGHT and self.obstacles_counter == 0:
+            self.new_level()
 
     def on_draw(self):
         arcade.start_render()
@@ -142,6 +149,23 @@ class App(arcade.Window):
             arcade.draw_line(self.start_point.x, self.start_point.y, self.end_point.x, self.end_point.y,
                              arcade.color.BLACK, 3)
 
+    def new_level(self):
+        # crea un nuevo nivel
+        for bird in self.birds:
+            bird.remove_from_sprite_lists()
+            self.space.remove(bird.shape, bird.body)
+
+        self.birds = arcade.SpriteList()
+
+        for obj in self.world:
+            obj.remove_from_sprite_lists()
+            self.space.remove(obj.shape, obj.body)
+
+        self.obstacles_counter = 0
+        self.background = arcade.load_texture("assets/img/fondo_segundo_nivel.jpg")
+
+        self.add_columns(100)
+        self.add_pigs()
 
 def main():
     app = App()
