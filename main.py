@@ -4,7 +4,7 @@ import arcade
 import arcade.key
 import pymunk
 
-from game_object import Bird, Column, Pig, BlueBird
+from game_object import Bird, Column, Pig, YellowBird, BlueBird
 from game_logic import get_impulse_vector, Point2D, get_distance
 
 logging.basicConfig(level=logging.DEBUG)
@@ -39,6 +39,7 @@ class App(arcade.Window):
         self.world = arcade.SpriteList()
         self.add_columns()
         self.add_pigs()
+        self.bird_type = "red"
 
         self.start_point = Point2D()
         self.end_point = Point2D()
@@ -81,26 +82,53 @@ class App(arcade.Window):
     def update_collisions(self):
         pass
 
+    def isBirdFlying(self):
+        for bird in self.birds:
+            if bird.isFlying():
+                return True
+        return False
+
     def on_mouse_press(self, x, y, button, modifiers):
-        if button == arcade.MOUSE_BUTTON_LEFT:
+        if not self.isBirdFlying() and button == arcade.MOUSE_BUTTON_LEFT:
+            self.creatingBrid = True
             self.start_point = Point2D(x, y)
             self.end_point = Point2D(x, y)
             self.draw_line = True
             logger.debug(f"Start Point: {self.start_point}")
+        elif button == arcade.MOUSE_BUTTON_LEFT:
+            for bird in self.birds:
+                if bird.isFlying():
+                    bird.power(self.sprites, self.birds, self.space) 
 
     def on_mouse_drag(self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int):
-        if buttons == arcade.MOUSE_BUTTON_LEFT:
+        if self.creatingBrid and buttons == arcade.MOUSE_BUTTON_LEFT:
             self.end_point = Point2D(x, y)
             logger.debug(f"Dragging to: {self.end_point}")
 
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int):
-        if button == arcade.MOUSE_BUTTON_LEFT:
+        if self.creatingBrid and button == arcade.MOUSE_BUTTON_LEFT:
+
             logger.debug(f"Releasing from: {self.end_point}")
             self.draw_line = False
             impulse_vector = get_impulse_vector(self.start_point, self.end_point)
-            bird = BlueBird( impulse_vector, x, y, self.space)
+            if self.bird_type == "red":
+                bird = Bird("assets/img/red-bird3.png", impulse_vector, x, y, self.space)
+            elif self.bird_type == "yellow":
+                bird = YellowBird(impulse_vector, x, y, self.space)
+            else:
+                bird = BlueBird(impulse_vector, x,y,self.space)
+
             self.sprites.append(bird)
             self.birds.append(bird)
+            self.creatingBrid = False
+
+    def on_key_release(self, symbol: int, modifiers: int):
+        if symbol == arcade.key.KEY_1:
+            self.bird_type = "red"
+        elif symbol == arcade.key.KEY_2:
+            self.bird_type = "yellow"
+        elif symbol == arcade.key.KEY_3:
+            self.bird_type = "blue"  
 
     def on_draw(self):
         arcade.start_render()
@@ -110,9 +138,6 @@ class App(arcade.Window):
             arcade.draw_line(self.start_point.x, self.start_point.y, self.end_point.x, self.end_point.y,
                              arcade.color.BLACK, 3)
 
-    def on_key_release(self, symbol: int, modifiers: int):
-        if symbol == arcade.key.SPACE:
-            self.birds[0].power(self.sprites, self.birds, self.space)
 
 def main():
     app = App()
