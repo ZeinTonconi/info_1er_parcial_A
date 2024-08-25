@@ -88,7 +88,6 @@ class App(arcade.Window):
 
     def on_update(self, delta_time: float):
         self.space.step(1 / 60.0)  # actualiza la simulacion de las fisicas
-        self.update_collisions()
         self.sprites.update()
 
     def isBirdFlying(self):
