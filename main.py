@@ -3,7 +3,7 @@ import logging
 import arcade
 import pymunk
 
-from game_object import Bird, Column, Pig
+from game_object import Bird, Column, Pig, YellowBird
 from game_logic import get_impulse_vector, Point2D, get_distance
 
 logging.basicConfig(level=logging.DEBUG)
@@ -38,6 +38,7 @@ class App(arcade.Window):
         self.world = arcade.SpriteList()
         self.add_columns()
         self.add_pigs()
+        self.bird_type = "red"
 
         self.start_point = Point2D()
         self.end_point = Point2D()
@@ -94,12 +95,25 @@ class App(arcade.Window):
 
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int):
         if button == arcade.MOUSE_BUTTON_LEFT:
+
             logger.debug(f"Releasing from: {self.end_point}")
             self.draw_line = False
             impulse_vector = get_impulse_vector(self.start_point, self.end_point)
-            bird = Bird("assets/img/red-bird3.png", impulse_vector, x, y, self.space)
+            if self.bird_type == "red":
+                bird = Bird("assets/img/red-bird3.png", impulse_vector, x, y, self.space)
+            elif self.bird_type == "yellow":
+                bird = YellowBird(impulse_vector, x, y, self.space)
+
             self.sprites.append(bird)
             self.birds.append(bird)
+
+    def on_key_release(self, symbol: int, modifiers: int):
+        if symbol == arcade.key.KEY_1:
+            self.bird_type = "red"
+        elif symbol == arcade.key.KEY_2:
+            self.bird_type = "yellow"
+        elif symbol == arcade.key.KEY_3:
+            self.bird_type = "blue"
 
     def on_draw(self):
         arcade.start_render()
