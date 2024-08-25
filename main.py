@@ -3,8 +3,9 @@ import logging
 import arcade
 import arcade.key
 import pymunk
+import random
 
-from game_object import Bird, Column, Pig, YellowBird, BlueBird
+from game_object import Bird, Column, Pig, YellowBird, BlueBird, FallenColumn
 from game_logic import get_impulse_vector, Point2D, get_distance
 
 logging.basicConfig(level=logging.DEBUG)
@@ -37,18 +38,24 @@ class App(arcade.Window):
         floor_shape.friction = 10
         self.space.add(floor_body, floor_shape)
 
+        wall_body = pymunk.Body(body_type=pymunk.Body.STATIC)
+        wall_shape = pymunk.Segment(wall_body, [WIDTH, 0], [WIDTH, HEIGHT], 0.0)
+        wall_shape.friction = 10
+        self.space.add(wall_body, wall_shape)
+
         self.sprites = arcade.SpriteList()
         self.birds = arcade.SpriteList()
         self.world = arcade.SpriteList()
         self.add_columns(400)
         self.add_pigs()
+       
         self.bird_type = "red"
 
         slingshot = arcade.Sprite("assets/img/sling-3.png", 1)
-        slingshot.position = (200, 50)
+        slingshot.position = (250, 50)
         self.sprites.append(slingshot)
 
-        self.start_point = Point2D(160, 120)
+        self.start_point = Point2D(210, 120)
         self.end_point = Point2D()
         self.distance = 0
         self.draw_line = False
@@ -79,9 +86,33 @@ class App(arcade.Window):
             self.obstacles_counter = self.obstacles_counter + 1
             logger.debug(f"Hay {self.obstacles_counter} obstáculos en la pantalla")
 
+    def build_house(self, x):
+        
+        floors = random.randint(1,4)
+        for i in range(floors):
+            column1 = Column(x, 50+120*i, self.space)
+            column2 = Column(x+60, 50+120*i, self.space)
+            beam = FallenColumn(x+25,110+120*i,self.space)
+            pig = Pig(x+30, 20+120*i, self.space)
+
+            house = [column1, column2, beam, pig]
+            for object in house:
+                self.sprites.append(object)
+                self.world.append(object)
+
+        self.obstacles_counter = self.obstacles_counter + floors * 4
+    
+    def build_neighbourhood(self):
+        pos_house = random.randint(WIDTH // 3, WIDTH-300)
+        self.build_house(pos_house)
+
+        while pos_house + 150 < WIDTH-300:
+            pos_house = random.randint(pos_house + 150, WIDTH - 300)
+            self.build_house(pos_house)
+
     def add_pigs(self):
         pig1 = Pig(WIDTH / 2, 100, self.space)
-        self.obstacles_counter = self.obstacles_counter+1
+        self.obstacles_counter = self.obstacles_counter + 1
         logger.debug(f"Hay {self.obstacles_counter} obstáculos en la pantalla")
         self.sprites.append(pig1)
         self.world.append(pig1)
@@ -137,7 +168,7 @@ class App(arcade.Window):
         elif symbol == arcade.key.KEY_3:
             self.bird_type = "blue"
         # pasa al siguiente nivel si ya no hay obstáculos presionando la flecha derecha
-        elif symbol == arcade.key.RIGHT and self.obstacles_counter == 0:
+        elif symbol == arcade.key.RIGHT and self.obstacles_counter <= 0:
             self.new_level()
 
     def on_draw(self):
@@ -163,8 +194,8 @@ class App(arcade.Window):
         self.obstacles_counter = 0
         self.background = arcade.load_texture("assets/img/fondo_segundo_nivel.jpg")
 
-        self.add_columns(100)
-        self.add_pigs()
+        self.build_neighbourhood()
+
 
 def main():
     app = App()

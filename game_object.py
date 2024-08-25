@@ -58,7 +58,7 @@ class Bird(arcade.Sprite):
         self.radians = self.shape.body.angle
 
     def isFlying(self):
-        return self.center_y > 40
+        return self.center_y > 100
     
     def power(self, sprites, birds, space):
         pass
@@ -153,7 +153,7 @@ class Pig(arcade.Sprite):
             friction: float = 0.4,
             collision_layer: int = 0,
     ):
-        super().__init__("assets/img/pig_failed.png", 0.1)
+        super().__init__("assets/img/pig_failed.png", 0.15)
         moment = pymunk.moment_for_circle(mass, 0, self.width / 2 - 3)
         body = pymunk.Body(mass, moment)
         body.position = (x, y)
@@ -209,6 +209,10 @@ class PassiveObject(arcade.Sprite):
 class Column(PassiveObject):
     def __init__(self, x, y, space):
         super().__init__("assets/img/column.png", x, y, space)
+
+class FallenColumn(PassiveObject):
+    def __init__(self, x, y, space):
+        super().__init__("assets/img/beam.png", x, y, space)
 
 
 class StaticObject(arcade.Sprite):
